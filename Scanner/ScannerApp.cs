@@ -89,6 +89,38 @@ namespace SmartHome.HoloLens
                 { "test web service",  TestWebService}
                 });
 
+
+
+            Action OpenMenu = delegate ()
+            {
+                
+                var menu = Scene.CreateChild("MENU");
+                menu.Scale = new Vector3(1, 1f, 1) / 10;
+                menu.Position = cursor.CursorNode.WorldPosition;
+                menu.SetDirection(LeftCamera.Node.Direction); // 
+            
+                //menu.LookAt(LeftCamera.Node.WorldDirection, Vector3.UnitY, TransformSpace.Local);
+                //menu.Position = new Vector3(pos.X, pos.Y, pos.Z - .05f);
+
+                System.Diagnostics.Debug.WriteLine("CAMERA POSITION:" + LeftCamera.Node.Position.ToString());
+                System.Diagnostics.Debug.WriteLine("MENU POSITION:" + menu.Position.ToString());
+                System.Diagnostics.Debug.WriteLine("DIRECTION:" + LeftCamera.Node.WorldDirection.ToString());
+
+                //menu.Position = new Vector3(menu.Position.X, menu.Position.Y, menu.Position.Z - 1f);
+
+
+                var matrl = Material.FromColor(Color.Red, true);
+
+                
+                var box = menu.CreateComponent<Box>();
+                box.SetMaterial(matrl);
+                //menu.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
+
+            };
+            await RegisterCortanaCommands(new Dictionary<string, Action> {
+                { "open menu", OpenMenu}
+            });
+
             while (!await ConnectAsync()) { }
 
             timer = new System.Threading.Timer(new System.Threading.TimerCallback(CheckStatus), null, 5000, 5000);
@@ -104,7 +136,7 @@ namespace SmartHome.HoloLens
             textNode.Position = new Vector3(0, 0, 1);
             textNode.SetScale(0.1f);
             var text = textNode.CreateComponent<Text3D>();
-            text.Text = "Look at the QR code\nopened in Android/iOS/UWP app...";
+            text.Text = "Look at the QR code\nopened in Client app...";
             text.HorizontalAlignment = HorizontalAlignment.Center;
             text.VerticalAlignment = VerticalAlignment.Center;
             text.TextAlignment = HorizontalAlignment.Center;
