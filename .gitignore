@@ -1,0 +1,12 @@
+.vs/Solution/*
+*.workbook
+Clients/SmartHouse.UWP/bin/x86/Debug/*
+Clients/SmartHouse.UWP/obj/*
+packages/*
+README.md
+Scanner/bin/x86/*
+Scanner/obj/x86/*
+SmartHome.Service/obj/Debug/*
+SmartHome.Service/bin/*
+Shared/obj/Debug/*
+Shared/bin/Debug/*
