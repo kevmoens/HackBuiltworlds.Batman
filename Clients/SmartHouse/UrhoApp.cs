@@ -195,15 +195,28 @@ namespace SmartHome
             }
 		}
 
-		public void AddBulb(Vector3 position, string text)
+		public void AddBulb(Vector3 position, string text, string objName, int scaleFactor)
 		{
 			var bulbNode = environmentNode.CreateChild("BULB");
 			bulbNode.Position = position - new Vector3(0, 0.2f, 0);
+            //bulbNode.Scale = new Vector3(0, 0.2f, 0) / 200;
+            switch(objName)  {
+                case "drum": 
+                    bulbNode.SetScale(.001f);
+                    break;
+                case "fuxcap":
+                    bulbNode.SetScale(.01f);
+                    break;
+                case "outlet":
+                    bulbNode.SetScale(.01f);
+                    break;
+            };
+
             var child = bulbNode.CreateChild();
             child.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
             
             var model = child.CreateComponent<StaticModel>();
-            model.Model = ResourceCache.GetModel("Data\\thumbtack.mdl");
+            model.Model = ResourceCache.GetModel("Data\\" + objName + ".mdl");
             //var light = bulbNode.CreateComponent<Light>();
             //         var box = bulbNode.CreateComponent<Box>(); //debug            
             //         box.SetMaterial(Material.FromColor(Color.Red));

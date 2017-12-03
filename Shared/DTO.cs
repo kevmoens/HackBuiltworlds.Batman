@@ -34,6 +34,8 @@ namespace Shared
 	[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 	public class BulbAddedDto : BaseDto
 	{
+        public string obj_name { get; set; }
+        public int scale_factor { get; set; }
         public string ID { get; set; }
 		public Vector3Dto Position { get; set; }
         public Vector3Dto Direction { get; set; }

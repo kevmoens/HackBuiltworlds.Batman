@@ -102,13 +102,13 @@ namespace SmartHome
 		void OnBulbAdded(BulbAddedDto dto)
 		{
 			lock (apartments)
-				apartments.Bulbs.Add(new BulbAddedDto() { Position = dto.Position, Text = dto.Text });
-			AddBulb(dto.Position, dto.Text);
+				apartments.Bulbs.Add(new BulbAddedDto() { scale_factor   = dto.scale_factor, Position = dto.Position, Text = dto.Text, obj_name = dto.obj_name });
+            AddBulb(dto.Position, dto.Text, dto.obj_name, dto.scale_factor);
 		}
 
-		void AddBulb(Vector3Dto position, string text)
+		void AddBulb(Vector3Dto position, string text, string objName, int scaleFactor)
 		{
-			Urho.Application.InvokeOnMain(() => app?.AddBulb(new Vector3(position.X, position.Y, position.Z), text));
+			Urho.Application.InvokeOnMain(() => app?.AddBulb(new Vector3(position.X, position.Y, position.Z),text, objName, scaleFactor));
 			Device.BeginInvokeOnMainThread(() =>
 			{
 				int index = bulbsStack.Children.Count;
@@ -186,7 +186,7 @@ namespace SmartHome
                         foreach (var surface in apartments.Surfaces)
                             app.AddOrUpdateSurface(surface.Value);
                         foreach (var bulb in apartments.Bulbs)
-                            AddBulb(bulb.Position, bulb.Text);
+                            AddBulb(bulb.Position, bulb.Text, bulb.obj_name, bulb.scale_factor);
                     });
             }
 		}
