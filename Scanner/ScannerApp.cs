@@ -199,7 +199,8 @@ namespace SmartHome.HoloLens
 
 
             Shared.SmartHomeService.SmartHomeService proxy = new Shared.SmartHomeService.SmartHomeService();
-            proxy.SetURI("http://" + ip + "/SmartHomeService/SmartHomeService.svc/rest");
+            //proxy.SetURI("http://" + ip + "/SmartHomeService/SmartHomeService.svc/rest");
+            proxy.SetURI("http://" + ip + ":50424/SmartHomeService/SmartHomeService.svc/rest");
             SessionID = Guid.NewGuid();
             Shared.SmartHomeService.OpenSessionResult session = await proxy.OpenSession(SessionID.ToString());
             IsPrimary = session.IsPrimary;
