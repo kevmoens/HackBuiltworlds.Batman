@@ -99,9 +99,6 @@
     <Content Include="Data\thumbtack.mdl" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Data\outlet2.mdl" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Data\drum.mdl" />
   </ItemGroup>
   <ItemGroup>
