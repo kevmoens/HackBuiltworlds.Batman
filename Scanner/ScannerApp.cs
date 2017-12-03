@@ -13,7 +13,10 @@ namespace SmartHome.HoloLens
 	public class ScannerApp : HoloApplication
 	{
         Node menuNode;
-		Node environmentNode;
+        Node outletNode;
+        Node heaterNode;
+        Node heaterNodeSave;
+        Node environmentNode;
 		SpatialCursor cursor;
 		Material material;
 		ClientConnection clientConnection;
@@ -41,10 +44,10 @@ namespace SmartHome.HoloLens
 			environmentNode = Scene.CreateChild();
 			EnableGestureTapped = true;
 
-			//material = Material.FromColor(Color.Gray); //-- debug mode
+			//material = Material.FromColor(Color.Gray); //-- debug mode  //SEE SPATIAL MAPPING
             _Debug = false;
             material = Material.FromColor(Color.Transparent, true);
-            material.SetTechnique(0, CoreAssets.Techniques.NoTextureUnlitVCol, 1, 1);
+            //material.SetTechnique(0, CoreAssets.Techniques.NoTextureUnlitVCol, 1, 1);  //UNCOMMENT TO DISABLE SEEING THROUGH WALLS
             
             Action placeOutlet = delegate ()
             {
@@ -71,6 +74,7 @@ namespace SmartHome.HoloLens
 
                 var modelOutlet = nodeOutlet.CreateComponent<StaticModel>();
                 modelOutlet.Model = ResourceCache.GetModel("Data\\outlet.mdl");
+                outletNode = outletBase;
             };
             
             Action OpenMenu = delegate ()
@@ -142,6 +146,31 @@ namespace SmartHome.HoloLens
                     outletText.SetColor(Color.Green);
 
 
+
+
+
+                    var heaterBase = menuBase.CreateChild("HEATER");
+                    heaterBase.Scale = new Vector3(1, 1f, 1) / 150; //0.001f
+                    heaterBase.Position = cursor.CursorNode.WorldPosition;
+                    heaterBase.SetDirection(cursor.CursorNode.WorldDirection);
+
+
+                    var nodeHeater = heaterBase.CreateChild();
+                    nodeHeater.Rotation = new Quaternion(90, 0, 0);
+                    nodeHeater.Position = new Vector3(0, 0, 0);
+                    //nodeHeater.SetScale(.5f);
+                    nodeHeater.Scale = new Vector3(.5f, .5f, 1.1f);
+                    var matrlcylinder = Material.FromColor(Color.Yellow, true);
+                    menu.Scale = new Vector3(3f, 3f, 0.25f);
+                    var cylinder = nodeHeater.CreateComponent<Cylinder>();
+                    cylinder.SetMaterial(matrl);
+
+                    //var modelHeater = nodeHeater.CreateComponent<StaticModel>();
+                    //modelHeater.Model = ResourceCache.GetModel("Data\\drum.mdl");
+
+
+
+
                     menuNode = menuBase;
                 }
             };
@@ -158,14 +187,126 @@ namespace SmartHome.HoloLens
                     } catch { }
                 }
             };
+            Action RemoveOutlet = delegate ()
+            {
+                if (outletNode != null)
+                {
+                    try
+                    {
+                        outletNode.Remove();
+                        outletNode.Dispose();
+                        outletNode = null;
+                    }
+                    catch { }
+                }
+            };
+            Action ToggleHeater = delegate ()
+            {
+                if (heaterNode != null)
+                {
+                try
+                {
+                        //InvokeOnMainAsync(() =>
+                        //{
+                        //    try { heaterNode.Enabled = !heaterNode.Enabled; } catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex.Message); }
+                        //});
+
+                        //heaterNode.Enabled = !heaterNode.Enabled;  //Not working? Should though?
+                        
+                        heaterNode.Remove();
+                        heaterNode.Dispose();
+                        heaterNode = null;
+                    }
+                    catch { }
+                } else if (heaterNodeSave != null)
+                {
+                    
+                    var heaterBase = Scene.CreateChild("HEATER");
+                    heaterBase.Scale = new Vector3(1, 1f, 1) / 150; //0.001f
+                    heaterBase.Position = heaterNodeSave.Position;
+                    heaterBase.SetDirection(heaterNodeSave.WorldDirection);
+                    var nodeHeater = heaterBase.CreateChild();
+                    nodeHeater.Rotation = new Quaternion(90, 0, 0); 
+                    nodeHeater.Position = new Vector3(0, 0, 0);
+
+                    nodeHeater.Scale = new Vector3(.5f, .5f, 1.1f);
+
+                    var modelHeater = nodeHeater.CreateComponent<StaticModel>();
+                    modelHeater.Model = ResourceCache.GetModel("Data\\drum.mdl");
+                    WaterHeaterData(heaterBase, new Quaternion(0, 270, 00), new Vector3(0, 200, 100), "Model: e2f40rd045v" + System.Environment.NewLine + "Mfg Date: 2017");
+                    heaterNode = heaterBase;
+                }
+            };
+            Action placeWaterHeater = delegate ()
+            {
+
+                heaterNodeSave = new Node();
+                heaterNodeSave.Position = cursor.CursorNode.WorldPosition;
+                heaterNodeSave.SetDirection(cursor.CursorNode.WorldDirection);
+
+                var heaterBase = Scene.CreateChild("HEATER");
+                heaterBase.Scale = new Vector3(1, 1f, 1) / 150; //0.001f
+                heaterBase.Position = cursor.CursorNode.WorldPosition;
+                heaterBase.SetDirection(cursor.CursorNode.WorldDirection);
+
+
+                var nodeHeater = heaterBase.CreateChild();
+                //nodeOutlet.Rotate(new Quaternion(0, 90, 90, 90), TransformSpace.Local);
+
+
+                nodeHeater.Rotation = new Quaternion(90, 0, 0); // cursor.CursorNode.Rotation.ToEulerAngles().Y, 0);  
+                //nodeOutlet.RotateAround(new Vector3(0, 0, 0), new Quaternion(0, 270, 90), TransformSpace.Local); //KMM
+
+
+                nodeHeater.Position = new Vector3(0, 0, 0);
+                //nodeHeater.SetScale(.5f);
+                //var outletBox = nodeOutlet.CreateComponent<Box>();
+                //var material = Material.FromColor(Color.Red, true);
+                //outletBox.SetMaterial(material);
+
+
+                nodeHeater.Scale = new Vector3(.5f, .5f, 1.1f);
+
+                var modelHeater = nodeHeater.CreateComponent<StaticModel>();
+                modelHeater.Model = ResourceCache.GetModel("Data\\drum.mdl");
+
+
+
+                
+                WaterHeaterData(heaterBase, new Quaternion(0, 270, 00), new Vector3(0, 200, 100), "Model: e2f40rd045v" + System.Environment.NewLine + "Mfg Date: 2017");
+                
+                heaterNode = heaterBase;
+            };
+
             await RegisterCortanaCommands(new Dictionary<string, Action>() { 
-                { "open menu", OpenMenu}, { "place", placeOutlet}, {"close menu", CloseMenu }
+                { "open menu", OpenMenu}
+                , {"place outlet", placeOutlet}
+                , {"remove outlet", RemoveOutlet}
+                , {"close menu", CloseMenu }
+                , {"place water heater", placeWaterHeater}
+                , {"show water heater", ToggleHeater}
+                , {"hide water heater", ToggleHeater}
             });
 
             while (!await ConnectAsync()) { }
 
             timer = new System.Threading.Timer(new System.Threading.TimerCallback(CheckStatus), null, 5000, 5000);
 
+        }
+
+        private static void WaterHeaterData(Node heaterBase, Quaternion rotation, Vector3 position, string Text)
+        {
+            var nodeHeaterDesc = heaterBase.CreateChild();
+            nodeHeaterDesc.Rotation = rotation;
+            nodeHeaterDesc.Position = position;
+            nodeHeaterDesc.SetScale(20f);
+            var text = nodeHeaterDesc.CreateComponent<Text3D>();
+            text.Text = Text;
+            text.HorizontalAlignment = HorizontalAlignment.Center;
+            text.VerticalAlignment = VerticalAlignment.Center;
+            text.TextAlignment = HorizontalAlignment.Center;
+            text.SetFont(CoreAssets.Fonts.AnonymousPro, 20);
+            text.SetColor(Color.Green);
         }
 
         public async Task<bool> ConnectAsync()
@@ -199,8 +340,8 @@ namespace SmartHome.HoloLens
 
 
             Shared.SmartHomeService.SmartHomeService proxy = new Shared.SmartHomeService.SmartHomeService();
-            //proxy.SetURI("http://" + ip + "/SmartHomeService/SmartHomeService.svc/rest");
-            proxy.SetURI("http://" + ip + ":50424/SmartHomeService/SmartHomeService.svc/rest");
+            proxy.SetURI("http://" + ip + "/SmartHomeService/SmartHomeService.svc/rest");
+            //proxy.SetURI("http://" + ip + ":50424/SmartHomeService.svc/rest");
             SessionID = Guid.NewGuid();
             Shared.SmartHomeService.OpenSessionResult session = await proxy.OpenSession(SessionID.ToString());
             IsPrimary = session.IsPrimary;
