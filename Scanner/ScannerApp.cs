@@ -10,7 +10,7 @@ using Urho.Shapes;
 
 namespace SmartHome.HoloLens
 {
-    public class ScannerApp : HoloApplication
+	public class ScannerApp : HoloApplication
 	{
         Node menuNode;
         Node outletNode;
@@ -49,8 +49,8 @@ namespace SmartHome.HoloLens
             material = Material.FromColor(Color.Transparent, true);
             //material.SetTechnique(0, CoreAssets.Techniques.NoTextureUnlitVCol, 1, 1);  //UNCOMMENT TO DISABLE SEEING THROUGH WALLS
             
-            Action placeOutlet = delegate ()
-            //{
+            Action placeOutlet = async delegate ()
+            {
                 var outletBase = Scene.CreateChild("OUTLET");
                 outletBase.Scale = new Vector3(1, 1f, 1) / 10;
                 outletBase.Position = cursor.CursorNode.WorldPosition;
@@ -74,6 +74,18 @@ namespace SmartHome.HoloLens
 
                 var modelOutlet = nodeOutlet.CreateComponent<StaticModel>();
                 modelOutlet.Model = ResourceCache.GetModel("Data\\outlet.mdl");
+
+
+                //Push to UWP
+                var textNode = outletBase.CreateChild("Text");
+                var text = textNode.CreateComponent<Text3D>();
+                BulbAddedDto bulb = new BulbAddedDto { scale_factor = 0, obj_name = "outlet", Text = "", ID = outletBase.Name, Position = new Vector3Dto(cursor.CursorNode.WorldPosition.X, cursor.CursorNode.WorldPosition.Y, cursor.CursorNode.WorldPosition.Z), Direction = new Vector3Dto(LeftCamera.Node.WorldDirection.X, LeftCamera.Node.WorldDirection.Y, LeftCamera.Node.WorldDirection.Z) };
+                clientConnection.SendObject(bulb);
+                ExistingBulbs.TryAdd(bulb.ID, bulb);
+                Shared.SmartHomeService.SmartHomeService proxy = new Shared.SmartHomeService.SmartHomeService();
+                await proxy.AddNote(bulb);
+
+                //SAVE
                 outletNode = outletBase;
             };
             
@@ -172,6 +184,7 @@ namespace SmartHome.HoloLens
 
 
                     menuNode = menuBase;
+                }
             };
 
             Action CloseMenu = delegate ()
@@ -218,6 +231,7 @@ namespace SmartHome.HoloLens
                     }
                     catch { }
                 } else if (heaterNodeSave != null)
+                {
                     
                     var heaterBase = Scene.CreateChild("HEATER");
                     heaterBase.Scale = new Vector3(1, 1f, 1) / 150; //0.001f
@@ -233,7 +247,9 @@ namespace SmartHome.HoloLens
                     modelHeater.Model = ResourceCache.GetModel("Data\\drum.mdl");
                     WaterHeaterData(heaterBase, new Quaternion(0, 270, 00), new Vector3(0, 200, 100), "Model: e2f40rd045v" + System.Environment.NewLine + "Mfg Date: 2017");
                     heaterNode = heaterBase;
-            Action placeWaterHeater = delegate ()
+                }
+            };
+            Action placeWaterHeater = async delegate ()
             {
 
                 heaterNodeSave = new Node();
@@ -253,73 +269,6 @@ namespace SmartHome.HoloLens
                 nodeHeater.Rotation = new Quaternion(90, 0, 0); // cursor.CursorNode.Rotation.ToEulerAngles().Y, 0);  
                 //nodeOutlet.RotateAround(new Vector3(0, 0, 0), new Quaternion(0, 270, 90), TransformSpace.Local); //KMM
 
-            Action PlaceOutlet = delegate ()
-            {
-
-                BuildObjectToMap("outlet", new Vector3(1f, 1f, 1f), 10);
-
-                //var pos = cursor.CursorNode.WorldPosition;
-                //var dir = LeftCamera.Node.WorldDirection;
-
-                //var outlet = Scene.CreateChild(Guid.NewGuid().ToString());
-                //outlet.Scale = new Vector3(1, 1f, 1) / 10;
-                //outlet.Position = cursor.CursorNode.WorldPosition;
-                ////outlet.Rotate(new Quaternion(0f, -45f, 0f), TransformSpace.Local);
-                //outlet.SetDirection(cursor.CursorNode.Direction); // 
-
-                //outlet.Position = pos;
-                //outlet.LookAt(dir, Vector3.UnitY, TransformSpace.Local);
-                ////outlet.Position = new Vector3(pos.X, pos.Y, pos.Z - .05f);
-                ////outlet.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
-
-                //var model = outlet.CreateComponent<Box>();
-                //model.Model = ResourceCache.GetModel("Data\\outlet.mdl");
-                //var textNode = outlet.CreateChild("Text");
-                //textNode.Rotate(new Quaternion(-315f, -270f, 0f), TransformSpace.Local);
-                //var text = textNode.CreateComponent<Text3D>();
-
-            };
-            Action PlaceFluxCapacitor = async delegate ()
-            {
-                BuildObjectToMap("fuxcap", new Vector3(1, 1f, 1), 1);
-            };
-             Action PlaceWaterHeater = async delegate ()
-            {
-                //var pos = cursor.CursorNode.WorldPosition;
-                //var dir = LeftCamera.Node.WorldDirection;
-                //var flux = Scene.CreateChild(Guid.NewGuid().ToString());
-                //flux.Scale = new Vector3(1, 1f, 1) / 10;
-
-                //flux.Position = pos;
-                //flux.LookAt(dir, Vector3.UnitY, TransformSpace.Local);
-                //flux.Position = new Vector3(pos.X, pos.Y, pos.Z - .05f);
-                //flux.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
-
-                //var model = flux.CreateComponent<StaticModel>();
-                //model.Model = ResourceCache.GetModel("Data\\flux.mdl");
-                //var textNode = flux.CreateChild("Text");
-                //textNode.Rotate(new Quaternion(-315f, -270f, 0f), TransformSpace.Local);
-
-                //var dir = LeftCamera.Node.WorldDirection;
-
-                //var flux = Scene.CreateChild(Guid.NewGuid().ToString());
-                //flux.Scale = new Vector3(1, 1f, 1) / 100;
-                //flux.Position = cursor.CursorNode.WorldPosition;
-                ////outlet.Rotate(new Quaternion(0f, -45f, 0f), TransformSpace.Local);
-                //flux.SetDirection(cursor.CursorNode.Direction); // 
-
-                //flux.LookAt(dir, Vector3.UnitY, TransformSpace.Local);
-                ////outlet.Position = new Vector3(pos.X, pos.Y, pos.Z - .05f);
-                ////outlet.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
-
-                //var model = flux.CreateComponent<Box>();
-                //model.Model = ResourceCache.GetModel("Data\\drum.mdl");
-                //var textNode = flux.CreateChild("Text");
-
-                BuildObjectToMap("drum", new Vector3(1, 1f, 1), 500);
-               // textNode.Rotate(new Quaternion(-315f, -270f, 0f), TransformSpace.Local);
-
-            };
 
                 nodeHeater.Position = new Vector3(0, 0, 0);
                 //nodeHeater.SetScale(.5f);
@@ -337,12 +286,24 @@ namespace SmartHome.HoloLens
 
                 
                 WaterHeaterData(heaterBase, new Quaternion(0, 270, 00), new Vector3(0, 200, 100), "Model: e2f40rd045v" + System.Environment.NewLine + "Mfg Date: 2017");
-                
+
+
+                //Push to UWP
+                var textNode = heaterBase.CreateChild("Text");
+                var text = textNode.CreateComponent<Text3D>();
+                BulbAddedDto bulb = new BulbAddedDto { scale_factor = 0, obj_name = "drum", Text =  "Model: e2f40rd045v" + System.Environment.NewLine + "Mfg Date: 2017", ID = heaterBase.Name, Position = new Vector3Dto(cursor.CursorNode.WorldPosition.X, cursor.CursorNode.WorldPosition.Y, cursor.CursorNode.WorldPosition.Z), Direction = new Vector3Dto(LeftCamera.Node.WorldDirection.X, LeftCamera.Node.WorldDirection.Y, LeftCamera.Node.WorldDirection.Z) };
+                clientConnection.SendObject(bulb);
+                ExistingBulbs.TryAdd(bulb.ID, bulb);
+                Shared.SmartHomeService.SmartHomeService proxy = new Shared.SmartHomeService.SmartHomeService();
+                await proxy.AddNote(bulb);
+
+
+                //Save
                 heaterNode = heaterBase;
             };
 
             await RegisterCortanaCommands(new Dictionary<string, Action>() { 
-                { "hello", PlaceWaterHeater },
+                { "open menu", OpenMenu}
                 , {"place outlet", placeOutlet}
                 , {"remove outlet", RemoveOutlet}
                 , {"close menu", CloseMenu }
@@ -350,36 +311,12 @@ namespace SmartHome.HoloLens
                 , {"show water heater", ToggleHeater}
                 , {"hide water heater", ToggleHeater}
             });
-            //await RegisterCortanaCommands(new Dictionary<string, Action> {
-            //    { "place outlet", PlaceObject}
-            //});
 
             while (!await ConnectAsync()) { }
 
             timer = new System.Threading.Timer(new System.Threading.TimerCallback(CheckStatus), null, 5000, 5000);
 
         }
-        public async void BuildObjectToMap(string objName, Vector3 vect, int scale_factor)
-        {
-            var pos = cursor.CursorNode.WorldPosition;
-            var dir = LeftCamera.Node.WorldDirection;
-            var object_to_map = Scene.CreateChild(Guid.NewGuid().ToString());
-            object_to_map.Scale = vect / scale_factor;
-            object_to_map.Position = cursor.CursorNode.WorldPosition;
-            //outlet.Rotate(new Quaternion(0f, -45f, 0f), TransformSpace.Local);
-            object_to_map.SetDirection(cursor.CursorNode.Direction); // 
-
-            object_to_map.LookAt(dir, Vector3.UnitY, TransformSpace.Local);
-            //outlet.Position = new Vector3(pos.X, pos.Y, posf.Z - .05f);
-            //outlet.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
-
-            var model = object_to_map.CreateComponent<Box>();
-            model.Model = ResourceCache.GetModel("Data\\" + objName + ".mdl");
-
-            var textNode = object_to_map.CreateChild("Text");
-            var text = textNode.CreateComponent<Text3D>();
-            BulbAddedDto bulb = new BulbAddedDto {scale_factor = scale_factor, obj_name = objName, Text = objName, ID = object_to_map.Name, Position = new Vector3Dto(pos.X, pos.Y, pos.Z), Direction = new Vector3Dto(LeftCamera.Node.WorldDirection.X, LeftCamera.Node.WorldDirection.Y, LeftCamera.Node.WorldDirection.Z) };
-            clientConnection.SendObject(bulb);
 
         private static void WaterHeaterData(Node heaterBase, Quaternion rotation, Vector3 position, string Text)
         {
@@ -619,21 +556,67 @@ namespace SmartHome.HoloLens
                         if (!ExistingBulbs.ContainsKey(bulb.ID))
                         {
 
-                            var child = Scene.CreateChild();
-                            child.Scale = new Vector3(1, 1f, 1) / 10;
+                            //var child = Scene.CreateChild();
+                            //child.Scale = new Vector3(1, 1f, 1) / 10;
 
-                            child.Position = new Vector3(bulb.Position.X, bulb.Position.Y, bulb.Position.Z);
-                            child.LookAt(new Vector3(bulb.Direction.X, bulb.Direction.Y, bulb.Direction.Z), Vector3.UnitY, TransformSpace.Local);
-                            //child.Position = new Vector3(bulb.Position.X, bulb.Position.Y, bulb.Position.Z - .2f);
-                            //child.Rotate(new Quaternion(0f, 0f, 0f), TransformSpace.Local);
-                            var text = child.CreateComponent<Text3D>();
-                            text.Text = bulb.Text;
-                            text.HorizontalAlignment = HorizontalAlignment.Center;
-                            text.VerticalAlignment = VerticalAlignment.Center;
-                            text.TextAlignment = HorizontalAlignment.Center;
-                            text.SetFont(CoreAssets.Fonts.AnonymousPro, 20);
-                            text.SetColor(Color.Green);
+                            //child.Position = new Vector3(bulb.Position.X, bulb.Position.Y, bulb.Position.Z);
+                            //child.LookAt(new Vector3(bulb.Direction.X, bulb.Direction.Y, bulb.Direction.Z), Vector3.UnitY, TransformSpace.Local);
+                            ////child.Position = new Vector3(bulb.Position.X, bulb.Position.Y, bulb.Position.Z - .2f);
+                            ////child.Rotate(new Quaternion(0f, 0f, 0f), TransformSpace.Local);
+                            //var text = child.CreateComponent<Text3D>();
+                            //text.Text = bulb.Text;
+                            //text.HorizontalAlignment = HorizontalAlignment.Center;
+                            //text.VerticalAlignment = VerticalAlignment.Center;
+                            //text.TextAlignment = HorizontalAlignment.Center;
+                            //text.SetFont(CoreAssets.Fonts.AnonymousPro, 20);
+                            //text.SetColor(Color.Green);
+                            //ExistingBulbs.TryAdd(bulb.ID, bulb);
+
+
+
+
+
+
+
+                            var bulbNode = Scene.CreateChild("BULB");
+                            bulbNode.Scale = new Vector3(1, 1f, 1) / 10;
+
+                            bulbNode.Position = new Vector3(bulb.Position.X, bulb.Position.Y, bulb.Position.Z) - new Vector3(0, 0.2f, 0);
+                            //bulbNode.Scale = new Vector3(0, 0.2f, 0) / 200;
+                            switch (bulb.obj_name)
+                            {
+                                case "drum":
+                                    bulbNode.SetScale(.001f);
+                                    break;
+                                case "fuxcap":
+                                    bulbNode.SetScale(.01f);
+                                    break;
+                                case "outlet":
+                                    bulbNode.SetScale(.01f);
+                                    break;
+                            };
+
+                            var child = bulbNode.CreateChild();
+                            child.Rotate(new Quaternion(315f, 270f, 0f), TransformSpace.Local);
+
+                            var matrl = Material.FromColor(Color.White, true);
+                            child.Scale = new Vector3(3f, 3f, 0.25f);
+                            var box = child.CreateComponent<Box>();
+                            box.SetMaterial(matrl);
+
+
+                            var model = child.CreateComponent<StaticModel>();
+                            model.Model = ResourceCache.GetModel("Data\\thumbtack.mdl"); // " + objName + ".mdl");
+                                                                                         //var light = bulbNode.CreateComponent<Light>();
+                                                                                         //         var box = bulbNode.CreateComponent<Box>(); //debug            
+                                                                                         //         box.SetMaterial(Material.FromColor(Color.Red));
+                                                                                         //bulbNode.SetScale(0.5f);
+                                                                                         //bulbNode.Enabled = true;
+
+                            //bulbNodes.Add(bulbNode);
                             ExistingBulbs.TryAdd(bulb.ID, bulb);
+
+
 
                         }
                     }
