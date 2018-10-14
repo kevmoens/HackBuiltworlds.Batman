@@ -304,12 +304,38 @@ namespace SmartHome.HoloLens
 
             await RegisterCortanaCommands(new Dictionary<string, Action>() { 
                 { "open menu", OpenMenu}
-                , {"place outlet", placeOutlet}
+                , {"place outlet", PlaceOutletModel}
                 , {"remove outlet", RemoveOutlet}
                 , {"close menu", CloseMenu }
                 , {"place water heater", placeWaterHeater}
                 , {"show water heater", ToggleHeater}
                 , {"hide water heater", ToggleHeater}
+                , {"DEBUG", () => {
+                    if (material.Name == "")
+                    {
+                        material = Material.FromColor(Color.Blue, true);
+                        material.Name = "BLUE";
+
+                        Color startColor = Color.Blue;
+                        Color endColor = new Color(0.8f, 0.8f, 0.8f);
+                        material.FillMode = FillMode.Wireframe; // wireframe ? FillMode.Wireframe : FillMode.Solid;
+                        var specColorAnimation = new ValueAnimation();
+                        specColorAnimation.SetKeyFrame(0.0f, startColor);
+                        specColorAnimation.SetKeyFrame(1.5f, endColor);
+                        material.SetShaderParameterAnimation("MatDiffColor", specColorAnimation, WrapMode.Once, 1.0f);
+                    } else
+                    {
+                        material = Material.FromColor(Color.Transparent, true);
+                        material.Name = "";
+                    }
+                    Task.Run(() => {
+                        foreach (Node surface in environmentNode.Children)
+                        {
+                            surface.GetComponent<StaticModel>().SetMaterial(material);
+                        }
+                        });
+                    }
+                }
             });
 
             while (!await ConnectAsync()) { }
@@ -317,6 +343,126 @@ namespace SmartHome.HoloLens
             timer = new System.Threading.Timer(new System.Threading.TimerCallback(CheckStatus), null, 5000, 5000);
 
         }
+
+        bool Raycast(float maxDistance, out Vector3 hitPos, out Drawable hitDrawable)
+        {
+            hitDrawable = null;
+            hitPos = Vector3.Zero;
+
+            var graphics = Graphics;
+            var ui = UI;
+
+            IntVector2 pos = ui.CursorPosition;
+            // Check the cursor is visible and there is no UI element in front of the cursor
+            //if (!ui.Cursor.Visible || ui.GetElementAt(pos, true) != null)
+            //    return false;
+
+            //Ray cameraRay = RightCamera.GetScreenRay((float)pos.X / graphics.Width, (float)pos.Y / graphics.Height);
+            //var result = Scene.GetComponent<Octree>().RaycastSingle(cameraRay, RayQueryLevel.Triangle, maxDistance, DrawableFlags.Geometry, uint.MaxValue);
+
+
+
+            Ray cameraRay = LeftCamera.GetScreenRay(0.5f, .5f);
+            var result = Scene.GetComponent<Octree>().RaycastSingle(cameraRay, RayQueryLevel.Triangle, 100, DrawableFlags.Geometry, 0x70000000);
+            if (result != null)
+            {
+                hitPos = result.Value.Position;
+                hitDrawable = result.Value.Drawable;
+                return true;
+            }
+            return false;
+        }
+
+
+        void PlaceOutletDecal()
+        {
+
+
+            Vector3 hitPos;
+            Drawable hitDrawable;
+
+            if (Raycast(250.0f, out hitPos, out hitDrawable))
+            {
+                var targetNode = hitDrawable.Node;
+                var decal = targetNode.GetComponent<DecalSet>();
+
+                if (decal == null)
+                {
+                    var cache = ResourceCache;
+                    decal = targetNode.CreateComponent<DecalSet>();
+
+                    var i = ResourceCache.GetImage("Data\\sa_control-panel.png");
+                    decal.Material = Material.FromImage(i);
+                    decal.Material.CullMode = CullMode.Ccw;
+                    decal.Material.ShadowCullMode = CullMode.Ccw;
+                    decal.Material.FillMode = FillMode.Solid;
+                    decal.Material.DepthBias = new BiasParameters(7685, 0);
+                    decal.Material.RenderOrder = 128;
+
+                    //decal.Material = cache.GetMaterial("Materials/UrhoDecal.xml");
+                }
+
+                // Add a square decal to the decal set using the geometry of the drawable that was hit, orient it to face the camera,
+                // use full texture UV's (0,0) to (1,1). Note that if we create several decals to a large object (such as the ground
+                // plane) over a large area using just one DecalSet component, the decals will all be culled as one unit. If that is
+                // undesirable, it may be necessary to create more than one DecalSet based on the distance
+                decal.AddDecal(hitDrawable, hitPos, RightCamera.Node.Rotation, 0.5f, 1.0f, 1.0f, Vector2.Zero,
+                    Vector2.One, 0.0f, 0.1f, uint.MaxValue);
+            }
+        }
+
+
+
+        async void PlaceOutletModel()
+        {
+
+
+            Ray cameraRay = LeftCamera.GetScreenRay(0.5f, .5f);
+            var result = Scene.GetComponent<Octree>().RaycastSingle(cameraRay, RayQueryLevel.Triangle, 100, DrawableFlags.Geometry, 0x70000000);
+            if (result != null)
+            {
+      
+                var outletBase = Scene.CreateChild("OUTLET");
+                outletBase.Scale = new Vector3(1, 1f, 1) / 10;
+                outletBase.Position = result.Value.Position;
+
+                var nodeOutlet = outletBase.CreateChild();
+
+                if (result.Value.Normal != Vector3.Zero)
+                {
+                    if (result.Value.Normal.X != 0)
+                    {
+                        nodeOutlet.Rotation = Quaternion.FromRotationTo(Vector3.Back, result.Value.Normal);
+                    } else
+                    {
+                        nodeOutlet.Rotation = Quaternion.FromRotationTo(Vector3.Right, result.Value.Normal);
+                    }
+                }
+
+                nodeOutlet.Position += (result.Value.Normal * 0.25f);
+
+                nodeOutlet.SetScale(.5f);
+
+
+                var modelOutlet = nodeOutlet.CreateComponent<StaticModel>();
+                modelOutlet.Model = ResourceCache.GetModel("Data\\outlet.mdl");
+
+
+                //Push to UWP
+                var textNode = outletBase.CreateChild("Text");
+                var text = textNode.CreateComponent<Text3D>();
+                BulbAddedDto bulb = new BulbAddedDto { scale_factor = 0, obj_name = "outlet", Text = "", ID = outletBase.Name, Position = new Vector3Dto(cursor.CursorNode.WorldPosition.X, cursor.CursorNode.WorldPosition.Y, cursor.CursorNode.WorldPosition.Z), Direction = new Vector3Dto(LeftCamera.Node.WorldDirection.X, LeftCamera.Node.WorldDirection.Y, LeftCamera.Node.WorldDirection.Z) };
+                clientConnection.SendObject(bulb);
+                ExistingBulbs.TryAdd(bulb.ID, bulb);
+                Shared.SmartHomeService.SmartHomeService proxy = new Shared.SmartHomeService.SmartHomeService();
+                await proxy.AddNote(bulb);
+
+                //SAVE
+                outletNode = outletBase;
+            }
+        }
+
+
 
         private static void WaterHeaterData(Node heaterBase, Quaternion rotation, Vector3 position, string Text)
         {
@@ -487,8 +633,9 @@ namespace SmartHome.HoloLens
 			node.Position = surface.BoundsCenter;
 			node.Rotation = surface.BoundsRotation;
 			staticModel.Model = generatedModel;
-			
-			if (isNew)
+
+
+            if (isNew)
 			{
 				staticModel.SetMaterial(material);
 			}
